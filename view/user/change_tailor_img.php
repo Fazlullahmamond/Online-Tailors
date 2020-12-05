@@ -1,0 +1,35 @@
+<?php
+
+    include("../../config/config.php");
+    include("../../config/userAuth.php");
+
+    $sql = "SELECT phone_number,image FROM users WHERE id = ". dc($_SESSION['id']);
+    $result = mysqli_query($db, $sql);
+    $row = mysqli_fetch_assoc($result);
+    $phone_number = $row['phone_number'];
+
+    $image = $_FILES['profile_picture']['name'] == null ? "NULL" : "'" . $_FILES['profile_picture']['name'] . "'";
+    if($image != "NULL"){
+        if(($_FILES['profile_picture']['type'] == 'image/jpg' || $_FILES['profile_picture']['type'] == 'image/jpeg') && $_FILES['profile_picture']['size'] < '4000000'){
+            $fileType = explode("image/", $_FILES['profile_picture']['type']);
+            $image_name = $row['image'] == null ? time() . "." . $fileType[1] : $row['image'];
+            $target_dir = "../../assets/img/tailor_img/" . $image_name;
+            if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_dir)) {
+                $sql = "UPDATE companies SET logo = '". $image_name ."', updated_at = CURRENT_TIMESTAMP WHERE id = ". $_SESSION['company_id'].";";    
+                if(mysqli_query($db, $sql)){
+                    redirect_to("tailorProfile.php?profile_img=uploaded");
+                    setcookie("image", $target_dir, time() + (86400 * 365), "/");
+                }else{
+                    redirect_to("tailorProfile.php?imgErr=true");
+                }
+            } else {
+                redirect_to("tailorProfile.php?imgErr=true");
+            }
+        }else{
+            redirect_to("tailorProfile.php?imgErr=true");
+        }
+    }
+
+
+
+?>
